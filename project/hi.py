@@ -1,4 +1,6 @@
-from curses.textpad import Textbox
+#Password Manager Project
+#CHALASANI SIDDARTH 
+#HU21CSEN01011
 from functools import partial
 import sqlite3
 import hashlib
@@ -8,13 +10,12 @@ from tkinter import CENTER, Button, Entry, Label, Tk, filedialog, Text
 from tkinter import *
 import os
 from tkinter import simpledialog
-from turtle import bgcolor
 
-from numpy import pad
 
 window=Tk()
 window.title("Passkey vault")
 
+#table for the passkey
 with sqlite3.connect('password.db') as conn:
     cur=conn.cursor()
     cur.execute("""CREATE TABLE IF NOT EXISTS passkey(
@@ -22,6 +23,7 @@ with sqlite3.connect('password.db') as conn:
                 )""")
     conn.commit()
 
+#table for the details
 with sqlite3.connect('password.db') as conn:
     cur=conn.cursor()
     cur.execute("""CREATE TABLE IF NOT EXISTS details(
@@ -32,13 +34,12 @@ with sqlite3.connect('password.db') as conn:
                 )""")
     conn.commit()
 
-'''
+
 def popup(str):
-    
     return simpledialog.askstring("Enter Details", str)
             
 
-#Create Password screen
+#creating the passkey
 def create_passkey():
     window.geometry("300x300")
 
@@ -58,6 +59,7 @@ def create_passkey():
 
     l2=Label(window)
 
+    #saving the created passkey in the database
     def save_passkey():
         key=txt.get()
         if txt.get()==txt1.get():
@@ -73,6 +75,7 @@ def create_passkey():
     button= Button(window, text="Save", pady=20, command=save_passkey)
     button.pack()
 
+#retrieving the passkey from database
 def get_passkey():
     cur.execute("SELECT rowid,* FROM passkey WHERE rowid=1")
     conn.commit()
@@ -96,7 +99,7 @@ def login_screen():
     text=Entry(window, width=30)
     text.pack()
 
-
+    #checking the login passkey
     def check_password():
         password=get_passkey()
 
@@ -131,17 +134,13 @@ def vault():
         conn.commit()
 
         vault()
-    
+    #deleting an entry
     def delete_entry(data):
-
-
         cur.execute("DELETE FROM details WHERE rowid=(?)", (data,))
         conn.commit()
         vault()
 
-        
-        
-
+    #resetting the passkey 
     def reset_passkey():
         for widget in window.winfo_children():
             widget.destroy()
@@ -171,6 +170,7 @@ def vault():
         txt1=Entry(window, width=30)
         txt1.pack()
 
+        #saving the reset passkey into database
         def reset_save():
             if txt2.get()==get_passkey():
                 if txt.get()==txt1.get():
@@ -185,8 +185,6 @@ def vault():
                 l2.config(text="Passwords do not match")
                 l2.pack()
 
-
-
         button= Button(window, text="Reset", pady=20, command=reset_save)
         button.pack()
 
@@ -200,10 +198,10 @@ def vault():
     btn=Button(window, text='+', command=add_entry)
     btn.grid(padx=20)
 
-
     btn1=Button(window, text="Reset Passkey", command=reset_passkey)
     btn1.grid(padx=20)
 
+    #displaying the labels for website, userid and passowrd
     l1=Label(window, text="Website")
     l1.grid(row=8, column=0, padx=100)
     l2=Label(window, text="User ID")
@@ -211,6 +209,7 @@ def vault():
     l3=Label(window, text="Password")
     l3.grid(row=8, column=2, padx=100)
 
+    #displaying the details
     cur.execute("SELECT * FROM details")
     data=cur.fetchall()
     if data!=None:
@@ -233,16 +232,10 @@ if data:
 else:
     create_passkey()
 
-
 window.mainloop()
 
-'''
 
-cur.execute("DELETE FROM details WHERE id=1")
-cur.execute("SELECT * FROM details")
-data=cur.fetchall()
-for i in data:
-    print(i)
-conn.commit()
+
+
 
 

@@ -1,3 +1,6 @@
-﻿I have developed this very basic project using nothing but python.
+I have developed this very basic project using nothing but python.
 I have referred several YouTube videos for creating the user interface using Tkinter.
+I have referred to several YouTube videos for creating the user interface using Tkinter.
+I am still updating this project.
+I am trying to create a database which will help this project with creating an account for each user.
 You can contact me @ schalasa2@gitam.in for any queries regarding the project.

@@ -1,6 +1,6 @@
 #Password Manager Project
 #CHALASANI SIDDARTH 
-#HU21CSEN01011
+#HU21CSEN0101114
 from functools import partial
 import sqlite3
 import hashlib
@@ -41,7 +41,7 @@ def popup(str):
 
 #creating the passkey
 def create_passkey():
-    window.geometry("300x300")
+    window.geometry("300x150")
 
     l=Label(window, text="Enter new login key")
     l.config(anchor=CENTER)
@@ -65,14 +65,14 @@ def create_passkey():
         if txt.get()==txt1.get():
             cur.execute("INSERT INTO passkey (pass) VALUES(?)", (key,))
             conn.commit()
-            vault()
+            login_screen()
         else:
             l2.config(text="Passwords Do not match")
         
 
 
 
-    button= Button(window, text="Save", pady=20, command=save_passkey)
+    button= Button(window, text="Save", padx=2, command=save_passkey)
     button.pack()
 
 #retrieving the passkey from database
@@ -87,7 +87,7 @@ def login_screen():
     for widget in window.winfo_children():
         widget.destroy()
 
-    window.geometry("300x300")
+    window.geometry("300x120")
 
     l=Label(window, text="Enter login key")
     l.config(anchor=CENTER)
@@ -136,9 +136,86 @@ def vault():
         vault()
     #deleting an entry
     def delete_entry(data):
-        cur.execute("DELETE FROM details WHERE rowid=(?)", (data,))
+        for widget in window.winfo_children():
+            widget.destroy()
+
+        window.geometry("300x120")
+
+        l=Label(window, text="Are you sure you want to delete?")
+        l.config(anchor=CENTER)
+        l.pack()
+
+        def confirm_delete(data):
+            cur.execute("DELETE FROM details WHERE rowid=(?)", (data,))
+            conn.commit()
+            vault()
+        
+        btn1= Button(window, text="Yes", padx=2,command=partial(confirm_delete,data,))
+        btn1.pack()
+        btn2= Button(window, text="No", padx=2,command=vault)
+        btn2.pack()
+
+        
+    
+    def edit_entries(data):
+        for widget in window.winfo_children():
+            widget.destroy()
+
+        window.geometry("300x150")
+
+        l=Label(window, text="What do you want to edit?")
+        l.config(anchor=CENTER)
+        l.pack()
+        btn1= Button(window, text="Website", padx=2,command=partial(edit_website,data,))
+        btn1.pack()
+        btn2= Button(window, text="User ID", padx=2,command=partial(edit_userid,data,))
+        btn2.pack()
+        btn3= Button(window, text="Password", padx=2,command=partial(edit_password,data,))
+        btn3.pack()
+        
+        
+    def edit_website(data):
+        sample1="Enter the website name"
+        website=popup(sample1)
+
+        cur.execute("UPDATE details SET website=(?) WHERE rowid=(?)", (website,data,))
         conn.commit()
         vault()
+    
+    def edit_userid(data):
+        sample1="Enter the user id"
+        userid=popup(sample1)
+
+        cur.execute("UPDATE details SET user_id=(?) WHERE rowid=(?)", (userid,data,))
+        conn.commit()
+        vault()
+    
+    def edit_password(data):
+        sample1="Enter the password"
+        passkey=popup(sample1)
+
+        cur.execute("UPDATE details SET passkey=(?) WHERE rowid=(?)", (passkey,data,))
+        conn.commit()
+        vault()
+    
+    def sign_out():
+        for widget in window.winfo_children():
+            widget.destroy()
+
+        window.geometry("300x120")
+
+        l=Label(window, text="Are you sure you want to signout?")
+        l.config(anchor=CENTER)
+        l.pack()
+
+        def confirm_signout():
+            login_screen()
+        
+        btn1= Button(window, text="Yes", padx=2,command=confirm_signout)
+        btn1.pack()
+        btn2= Button(window, text="No", padx=2,command=vault)
+        btn2.pack()
+
 
     #resetting the passkey 
     def reset_passkey():
@@ -185,29 +262,32 @@ def vault():
                 l2.config(text="Passwords do not match")
                 l2.pack()
 
-        button= Button(window, text="Reset", pady=20, command=reset_save)
+        button= Button(window, text="Reset", padx=2, command=reset_save)
         button.pack()
 
 
     
-    window.geometry("950x300")
+    window.geometry("1020x300")
     
     l=Label(window, text="Welcome to the Password Vault")
-    l.grid(padx=10, pady=10)
-
-    btn=Button(window, text='+', command=add_entry)
-    btn.grid(padx=20)
+    l.grid(padx=10, pady=10, column=1)
 
     btn1=Button(window, text="Reset Passkey", command=reset_passkey)
-    btn1.grid(padx=20)
+    btn1.grid(padx=20, row=1, column=4)
+
+    b=Button(window, text="Sign Out",command=sign_out)
+    b.grid(padx=10, pady=10,row=0, column=4)
+
+    btn=Button(window, text='Add', command=add_entry)
+    btn.grid(padx=20, row=2, column=1)
 
     #displaying the labels for website, userid and passowrd
     l1=Label(window, text="Website")
-    l1.grid(row=8, column=0, padx=100)
+    l1.grid(row=10, column=0, padx=100)
     l2=Label(window, text="User ID")
-    l2.grid(row=8, column=1, padx=100)
+    l2.grid(row=10, column=1, padx=100)
     l3=Label(window, text="Password")
-    l3.grid(row=8, column=2, padx=100)
+    l3.grid(row=10, column=2, padx=100)
 
     #displaying the details
     cur.execute("SELECT * FROM details")
@@ -220,8 +300,10 @@ def vault():
             l5.grid(row=i+11, column=1, padx=100)
             l6=Label(window, text=(data[i][3]))
             l6.grid(row=i+11, column=2, padx=100)
-            btn2=Button(window, text="Delete", command=partial(delete_entry, data[i][0])) #command=partial(delete_entry,data[i+1]))
+            btn2=Button(window, text="Delete", command=partial(delete_entry, data[i][0]))
             btn2.grid(row=i+11, column=3, padx=2)
+            btn3=Button(window, text="Edit", command=partial(edit_entries, data[i][0]))
+            btn3.grid(row=i+11, column=4, padx=2)
             
 
 cur.execute("SELECT * FROM passkey")

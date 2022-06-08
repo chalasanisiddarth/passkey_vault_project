@@ -19,6 +19,7 @@ window.title("Passkey vault")
 with sqlite3.connect('password.db') as conn:
     cur=conn.cursor()
     cur.execute("""CREATE TABLE IF NOT EXISTS passkey(
+                userid text,
                 pass text
                 )""")
     conn.commit()
@@ -28,6 +29,7 @@ with sqlite3.connect('password.db') as conn:
     cur=conn.cursor()
     cur.execute("""CREATE TABLE IF NOT EXISTS details(
                 id INTEGER PRIMARY KEY,
+                user text,
                 website NOT NULL,
                 user_id NOT NULL,
                 passkey NOT NULL
@@ -41,7 +43,16 @@ def popup(str):
 
 #creating the passkey
 def create_passkey():
-    window.geometry("300x150")
+    for widget in window.winfo_children():
+        widget.destroy()
+    window.geometry("500x300")
+
+    l2=Label(window, text="Enter user id")
+    l2.config(anchor=CENTER)
+    l2.pack()
+
+    txt2=Entry(window, width=30)
+    txt2.pack()
 
     l=Label(window, text="Enter new login key")
     l.config(anchor=CENTER)
@@ -58,28 +69,43 @@ def create_passkey():
     txt1.pack()
 
     l2=Label(window)
+    l2.pack()
+
+    l3=Label(window)
+    l3.pack()
 
     #saving the created passkey in the database
     def save_passkey():
+        userid=txt2.get()
         key=txt.get()
-        if txt.get()==txt1.get():
-            cur.execute("INSERT INTO passkey (pass) VALUES(?)", (key,))
-            conn.commit()
-            login_screen()
+        cur.execute("SELECT * FROM passkey WHERE userid=(?)", (userid,))
+        check=cur.fetchall()
+        conn.commit()
+        if check:
+            l3.config(text="User already exists")
         else:
-            l2.config(text="Passwords Do not match")
+            if txt.get()==txt1.get():
+                cur.execute("INSERT INTO passkey VALUES(?,?)", (userid,key,))
+                conn.commit()
+                login_screen()
+            else:
+                l2.config(text="Passwords Do not match")
         
-
-
-
     button= Button(window, text="Save", padx=2, command=save_passkey)
     button.pack()
 
 #retrieving the passkey from database
 def get_passkey():
-    cur.execute("SELECT rowid,* FROM passkey WHERE rowid=1")
+    with open('user.txt') as f:
+        data=f.read()
+    cur.execute("SELECT * FROM passkey WHERE userid=(?)", (data,))
+    data1=cur.fetchall()
     conn.commit()
-    return cur.fetchall()[0][1]
+    return data1[0][1]
+
+def get_userid():
+    with open('user.txt') as f:
+        return f.read()
     
 
 #Login Screen 
@@ -87,7 +113,14 @@ def login_screen():
     for widget in window.winfo_children():
         widget.destroy()
 
-    window.geometry("300x120")
+    window.geometry("500x300")
+
+    l1=Label(window, text="Enter user id")
+    l1.config(anchor=CENTER)
+    l1.pack()
+
+    text1=Entry(window, width=10)
+    text1.pack()
 
     l=Label(window, text="Enter login key")
     l.config(anchor=CENTER)
@@ -96,13 +129,18 @@ def login_screen():
     l2=Label(window)
     l2.pack()
 
-    text=Entry(window, width=30)
+    text=Entry(window, width=10)
     text.pack()
+
+    
 
     #checking the login passkey
     def check_password():
+        
+        with open('user.txt', 'w') as f:
+            f.write(text1.get())
         password=get_passkey()
-
+        
         if password==text.get():
             vault()
         else:
@@ -111,7 +149,10 @@ def login_screen():
 
 
 
-    button= Button(window, text="Submit", pady=5, padx=5,command=check_password)
+    button= Button(window, text="Sign in", padx=2,command=check_password)
+    button.pack()
+
+    button= Button(window, text="Sign up", padx=2,command=create_passkey)
     button.pack()
 
 #Password Vault Screen
@@ -121,16 +162,17 @@ def vault():
 
     #Adding an entry into the database
     def add_entry():
-        
+        with open('user.txt') as f:
+            data=f.read()
         sample1="Enter the website name"
         sample2="Enter your user id"
         sample3="Enter your password"
 
         website=popup(sample1)
-        userid=popup(sample2)
+        user_id=popup(sample2)
         passkey=popup(sample3)
 
-        cur.execute("INSERT INTO details (website,user_id,passkey)VALUES(?,?,?)", (website,userid,passkey,))
+        cur.execute("INSERT INTO details (user,website,user_id,passkey)VALUES(?,?,?,?)", (data,website,user_id,passkey,))
         conn.commit()
 
         vault()
@@ -252,8 +294,8 @@ def vault():
             if txt2.get()==get_passkey():
                 if txt.get()==txt1.get():
                     reset=txt.get()
-                    cur.execute("DELETE FROM passkey WHERE rowid=1")
-                    cur.execute("INSERT INTO passkey VALUES(?)", (reset,))
+                    cur.execute("DELETE FROM passkey WHERE userid=(?)", (get_userid(),))
+                    cur.execute("INSERT INTO passkey VALUES(?,?)", (get_userid(),reset,))
                     conn.commit()
                     login_screen()
             else:
@@ -290,15 +332,17 @@ def vault():
     l3.grid(row=10, column=2, padx=100)
 
     #displaying the details
-    cur.execute("SELECT * FROM details")
+    with open('user.txt') as f:
+        data=f.read()
+    cur.execute("SELECT * FROM details where user=(?)", (data,))
     data=cur.fetchall()
     if data!=None:
         for i in range(0,len(data)):
-            l4=Label(window, text=(data[i][1]))
+            l4=Label(window, text=(data[i][2]))
             l4.grid(row=i+11, column=0, padx=100)
-            l5=Label(window, text=(data[i][2]))
+            l5=Label(window, text=(data[i][3]))
             l5.grid(row=i+11, column=1, padx=100)
-            l6=Label(window, text=(data[i][3]))
+            l6=Label(window, text=(data[i][4]))
             l6.grid(row=i+11, column=2, padx=100)
             btn2=Button(window, text="Delete", command=partial(delete_entry, data[i][0]))
             btn2.grid(row=i+11, column=3, padx=2)

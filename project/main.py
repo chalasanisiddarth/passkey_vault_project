@@ -1,6 +1,7 @@
 #Password Manager Project
 #CHALASANI SIDDARTH 
 #HU21CSEN0101114
+from cProfile import label
 from functools import partial
 import sqlite3
 import hashlib
@@ -103,6 +104,7 @@ def get_passkey():
     conn.commit()
     return data1[0][1]
 
+#retrieving the userid from database
 def get_userid():
     with open('user.txt') as f:
         return f.read()
@@ -119,7 +121,7 @@ def login_screen():
     l1.config(anchor=CENTER)
     l1.pack()
 
-    text1=Entry(window, width=10)
+    text1=Entry(window, width=20)
     text1.pack()
 
     l=Label(window, text="Enter login key")
@@ -129,8 +131,11 @@ def login_screen():
     l2=Label(window)
     l2.pack()
 
-    text=Entry(window, width=10)
+    text=Entry(window, width=20)
     text.pack()
+
+    l3=Label(window)
+    l3.pack()
 
     
 
@@ -140,12 +145,17 @@ def login_screen():
         with open('user.txt', 'w') as f:
             f.write(text1.get())
         password=get_passkey()
-        
-        if password==text.get():
-            vault()
+        cur.execute("SELECT * FROM passkey WHERE userid=(?)", (text1.get(),))
+        data=cur.fetchall()
+        conn.commit()
+        if data:
+            if password==text.get():
+                vault()
+            else:
+                text.delete(0, 'end')
+                l2.config(text="Passwords do not match")
         else:
-            text.delete(0, 'end')
-            l2.config(text="Passwords do not match")
+            l3.config(text="User does not exist")
 
 
 
@@ -214,7 +224,43 @@ def vault():
         btn2.pack()
         btn3= Button(window, text="Password", padx=2,command=partial(edit_password,data,))
         btn3.pack()
-        
+    def delete_account():
+        for widget in window.winfo_children():
+            widget.destroy()
+
+        window.geometry("300x120")
+
+        l=Label(window, text="Enter your password")
+        l.config(anchor=CENTER)
+        l.pack()
+
+        text=Entry(window, width=20)
+        text.pack()
+
+        l1=Label(window)
+        l1.pack()
+
+        def check_delete():
+            cur.execute("SELECT * FROM passkey WHERE userid=(?)", (get_userid(),))
+            data=cur.fetchall()
+            conn.commit()
+            password=data[0][1]
+            
+            if text.get()==password:
+                cur.execute("DELETE FROM details WHERE user=(?)",(get_userid(),))
+                conn.commit()
+                cur.execute("DELETE FROM passkey WHERE userid=(?)", (get_userid(),))
+                conn.commit()
+                login_screen()
+            else:
+                l1.config(text="Password does not match")
+
+        btn1= Button(window, text="Submit", command=check_delete)
+        btn1.pack()
+
+
+
+            
         
     def edit_website(data):
         sample1="Enter the website name"
@@ -320,6 +366,9 @@ def vault():
     b=Button(window, text="Sign Out",command=sign_out)
     b.grid(padx=10, pady=10,row=0, column=4)
 
+    b=Button(window, text="Delete account",command=delete_account)
+    b.grid(padx=10, pady=10,row=2, column=4)
+
     btn=Button(window, text='Add', command=add_entry)
     btn.grid(padx=20, row=2, column=1)
 
@@ -359,6 +408,13 @@ else:
     create_passkey()
 
 window.mainloop()
+
+
+
+
+
+
+
 
 
 

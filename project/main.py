@@ -12,6 +12,8 @@ from tkinter import *
 import os
 from tkinter import simpledialog
 
+from matplotlib.pyplot import show
+
 
 window=Tk()
 window.title("Passkey vault")
@@ -131,7 +133,7 @@ def login_screen():
     l2=Label(window)
     l2.pack()
 
-    text=Entry(window, width=20)
+    text=Entry(window, width=20, show='*')
     text.pack()
 
     l3=Label(window)
@@ -408,16 +410,3 @@ else:
     create_passkey()
 
 window.mainloop()
-
-
-
-
-
-
-
-
-
-
-
-
-
